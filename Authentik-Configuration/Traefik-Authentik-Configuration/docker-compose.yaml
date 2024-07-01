@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  traefik:
+    image: traefik:v3.0.2
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.filename=/etc/traefik/conf/middlewares.yml"
+    container_name: traefik-prod-1
+    ports:
+      - "80:80"
+      - "443:443"
+      #- "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./config/conf/:/etc/traefik/conf/ 
+      - ./config/certs/:/etc/traefik/certs/
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.services.traefik-prod-1.loadbalancer.server.port=8080"
+     - "traefik.http.routers.traefik-http.rule=Host(`traefik.srv-prod-1.yourdomaine.uk`)"
+     - "traefik.http.routers.traefik-https.rule=Host(`traefik.srv-prod-1.yourdomaine.uk`)"
+     - "traefik.http.routers.traefik-https.entrypoints=websecure"
+     - "traefik.http.routers.traefik-http.entrypoints=web"
+     - "traefik.http.routers.traefik-https.tls=true"
+     - "traefik.http.routers.traefik-https.tls.certresolver=production"
+     - "traefik.http.routers.traefik-https.tls.domains[0].main=traefik.srv-prod-1.yourdomaine.uk"
+     - "traefik.http.routers.traefik-https.tls.domains[0].sans=*.traefik.srv-prod-1.yourdomaine.uk"
+     - "traefik.http.routers.traefik-https.middlewares=middlewares-authentik@file"
+    environment:
+      CF_DNS_API_TOKEN: -<Your-Token-Cloud-flare>
+    restart: unless-stopped
+    networks:
+      - traefik-prod-1  
+
+networks:
+  traefik-prod-1:
+    external: true
