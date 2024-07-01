@@ -1,0 +1,60 @@
+---
+volumes:
+  semaphore-mysql:
+    driver: local
+services:
+  mysql:
+    image: docker.io/library/mysql:8.3
+    container_name: ansiblesemaphore-mysql-prod-1
+    hostname: mysql
+    volumes:
+      - semaphore-mysql:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=semaphore
+      - MYSQL_USER=semaphore
+      - MYSQL_PASSWORD=secret-password 
+    restart: unless-stopped
+    networks:
+      - traefik-prod-1
+  semaphore:
+    container_name: ansiblesemaphore-prod-1
+    image: docker.io/semaphoreui/semaphore:v2.9.75
+    environment:
+      - SEMAPHORE_DB_USER=semaphore
+      - SEMAPHORE_DB_PASS=secret-password  
+      - SEMAPHORE_DB_HOST=mysql
+      - SEMAPHORE_DB_PORT=3306
+      - SEMAPHORE_DB_DIALECT=mysql
+      - SEMAPHORE_DB=semaphore
+      - SEMAPHORE_PLAYBOOK_PATH=/tmp/semaphore/
+      - SEMAPHORE_ADMIN_PASSWORD=secret-admin-password 
+      - SEMAPHORE_ADMIN_NAME=admin
+      - SEMAPHORE_ADMIN_EMAIL=admin@localhost
+      - SEMAPHORE_ADMIN=admin
+      - ANSIBLE_HOST_KEY_CHECKING=false  
+    volumes:
+      - ./inventory/:/inventory:ro
+      - ./authorized-keys/:/authorized-keys:ro
+      - ./config/:/etc/semaphore:rw
+    restart: unless-stopped
+    depends_on:
+      - mysql
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.semaphore-prod-1.loadbalancer.server.port=3000"
+      - "traefik.http.routers.semaphore-http.rule=Host(`semaphore.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.semaphore-https.rule=Host(`semaphore.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.semaphore-https.entrypoints=websecure"
+      - "traefik.http.routers.semaphore-http.entrypoints=web"
+      - "traefik.http.routers.semaphore-https.tls=true"
+      - "traefik.http.routers.semaphore-https.tls.certresolver=production"
+      - "traefik.http.routers.semaphore-https.tls.domains[0].main=semaphore.srv-prod-1.homelabwalid.uk"
+      - "traefik.http.routers.semaphore-https.tls.domains[0].sans=*.semaphore.srv-prod-1.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
