@@ -13,4 +13,4 @@ scrape_configs:
   - job_name: cadvisor
     scrape_interval: 5s
     static_configs:
-      - targets: [yourdomaine.local:8084
+      - targets: [yourdomaine.local:8084]
