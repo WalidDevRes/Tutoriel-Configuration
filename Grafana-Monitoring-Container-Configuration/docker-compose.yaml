@@ -1,0 +1,83 @@
+volumes:
+  prometheus-data: {}
+  grafana-data: {}
+
+services:
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter-prod-1
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-prod-1
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - cadvisor
+
+    networks:
+      - traefik-prod-1
+      
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-prod-1
+    restart: unless-stopped
+    volumes:
+      - grafana-data:/var/lib/grafana
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.grafana-prod-1.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana-http.rule=Host(`grafana.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.grafana-https.rule=Host(`grafana.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.grafana-https.entrypoints=websecure"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.routers.grafana-https.tls=true"
+      - "traefik.http.routers.grafana-https.tls.certresolver=production"
+      - "traefik.http.routers.grafana-https.tls.domains[0].main=grafana.srv-prod-1.yourdomaine.uk"
+      - "traefik.http.routers.grafana-https.tls.domains[0].sans=*.grafana.srv-prod-1.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+
+  snmp_exporter:
+    image: quay.io/prometheus/snmp-exporter:latest
+    container_name: snmp-exporter-prod-1
+    ports:
+      - "9116:9116"
+    volumes:
+      - ./prometheus/snmp_exporter/snmp.yml:/etc/snmp_exporter/snmp.yml
+    networks:
+      - traefik-prod-1
+
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor-prod-1
+    ports:
+      - 8084:8080
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
