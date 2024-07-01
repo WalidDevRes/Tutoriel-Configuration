@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  guacamole:
+    image: flcontainers/guacamole
+    container_name: guacamole-prod-1
+    restart: unless-stopped
+    environment:
+      TZ: 'UTC'
+      #EXTENSIONS: 'auth-totp,auth-ldap'
+    volumes:
+      - postgres:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.guacamole-prod-1.loadbalancer.server.port=8080"
+      - "traefik.http.routers.guacamole-http.rule=Host(`guacamole.yourdomaine.uk`)"
+      - "traefik.http.routers.guacamole-https.rule=Host(`guacamole.yourdomaine.uk`)"
+      - "traefik.http.routers.guacamole-https.entrypoints=websecure"
+      - "traefik.http.routers.guacamole-http.entrypoints=web"
+      - "traefik.http.routers.guacamole-https.tls=true"
+      - "traefik.http.routers.guacamole-https.tls.certresolver=production"
+      - "traefik.http.routers.guacamole-https.tls.domains[0].main=guacamole.yourdomaine.uk"
+      - "traefik.http.routers.guacamole-https.tls.domains[0].sans=*.guacamole.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+volumes:
+  postgres:
+    driver: local
+
+networks:
+  traefik-prod-1:
+    external: true
