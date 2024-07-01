@@ -1,0 +1,30 @@
+version: "3.3"
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage-prod-1
+    environment:
+      PUID: 0
+      PGID: 0
+    #ports:
+    #  - 3003:3000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.homepage-prod-1.loadbalancer.server.port=3000"
+      - "traefik.http.routers.homepage-http.rule=Host(`homepage.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.homepage-https.rule=Host(`homepage.srv-prod-1.yourdomaine.uk`)"
+      - "traefik.http.routers.homepage-https.entrypoints=websecure"
+      - "traefik.http.routers.homepage-http.entrypoints=web"
+      - "traefik.http.routers.homepage-https.tls=true"
+      - "traefik.http.routers.homepage-https.tls.certresolver=production"
+      - "traefik.http.routers.homepage-https.tls.domains[0].main=homepage.srv-prod-1.yourdomaine.uk"
+      - "traefik.http.routers.homepage-https.tls.domains[0].sans=*.homepage.srv-prod-1.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
