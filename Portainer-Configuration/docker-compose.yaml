@@ -1,0 +1,29 @@
+version: '3'
+services:
+  portainer:
+    container_name: portainer-prod-1
+    image: portainer/portainer-ce
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.portainer-prod-1.loadbalancer.server.port=9000"
+      - "traefik.http.routers.portainer-http.rule=Host(`portainer.yourdomaine.uk`)"
+      - "traefik.http.routers.portainer-https.rule=Host(`portainer.yourdomaine.uk`)"
+      - "traefik.http.routers.portainer-https.entrypoints=websecure"
+      - "traefik.http.routers.portainer-http.entrypoints=web"
+      - "traefik.http.routers.portainer-https.tls=true"
+      - "traefik.http.routers.portainer-https.tls.certresolver=production"
+      - "traefik.http.routers.portainer-https.tls.domains[0].main=portainer.yourdomaine.uk"
+      - "traefik.http.routers.portainer-https.tls.domains[0].sans=*.portainer.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
+
+volumes:
+  portainer_data:
