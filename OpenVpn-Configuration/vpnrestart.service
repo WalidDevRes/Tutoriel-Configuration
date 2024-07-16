@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash /home/username/vpn/restart_vpn_starup.shsh
+ExecStart=/bin/bash /home/username/vpn/restart_vpn_starup.sh
 
 [Install]
 WantedBy=multi-user.target
