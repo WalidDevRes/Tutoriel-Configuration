@@ -1,0 +1,12 @@
+[Unit]
+Description=Script de redémarrage OpenVPN
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/username/vpn/restart_vpn_starup.shsh
+
+[Install]
+WantedBy=multi-user.target
+Alias=restart-openvpn.service
