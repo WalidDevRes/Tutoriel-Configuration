@@ -1,0 +1,28 @@
+---
+volumes:
+  uptimekuma-data:
+    driver: local
+services:
+  uptimekuma:
+    image: docker.io/louislam/uptime-kuma:1.23.13
+    container_name: uptimekuma-prod-1
+    volumes:
+      - uptimekuma-data:/app/data
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.uptimekuma-prod-1.loadbalancer.server.port=3001"
+      - "traefik.http.routers.uptimekuma-http.rule=Host(`uptimekuma.yourdomaine.uk`)"
+      - "traefik.http.routers.uptimekuma-https.rule=Host(`uptimekuma.yourdomaine.uk`)"
+      - "traefik.http.routers.uptimekuma-https.entrypoints=websecure"
+      - "traefik.http.routers.uptimekuma-http.entrypoints=web"
+      - "traefik.http.routers.uptimekuma-https.tls=true"
+      - "traefik.http.routers.uptimekuma-https.tls.certresolver=production"
+      - "traefik.http.routers.uptimekuma-https.tls.domains[0].main=uptimekuma.yourdomaine.uk"
+      - "traefik.http.routers.uptimekuma-https.tls.domains[0].sans=*.uptimekuma.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
