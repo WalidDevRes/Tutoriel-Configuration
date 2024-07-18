@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  dockge:
+    image: louislam/dockge:1
+    container_name: dockge-prod-1
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+      - /opt/stacks:/opt/stacks
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.dockge-prod-1.loadbalancer.server.port=5001"
+      - "traefik.http.routers.dockge-http.rule=Host(`dockge.yourdomaine.uk`)"
+      - "traefik.http.routers.dockge-https.rule=Host(`dockge.yourdomaine.uk`)"
+      - "traefik.http.routers.dockge-https.entrypoints=websecure"
+      - "traefik.http.routers.dockge-http.entrypoints=web"
+      - "traefik.http.routers.dockge-https.tls=true"
+      - "traefik.http.routers.dockge-https.tls.certresolver=production"
+      - "traefik.http.routers.dockge-https.tls.domains[0].main=dockge.yourdomaine.uk"
+      - "traefik.http.routers.dockge-https.tls.domains[0].sans=*.dockge.yourdomaine.uk"
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
