@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  stepca:
+    image: smallstep/step-ca
+    container_name: stepca-prod
+    user: root
+    environment:
+      DOCKER_STEPCA_INIT_NAME: walidhomelab
+      DOCKER_STEPCA_INIT_DNS_NAMES: localhost,<my_srv_dns_local>
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: true
+      DOCKER_STEPCA_INIT_SSH: true # enable SSH certificate support
+      DOCKER_STEPCA_INIT_ACME: true # initial ACME provisioner for the CA
+    labels:
+      diun.enable: true
+    volumes:
+      - /home/srv-prod-1/infrastructure-prod/docker-prod/stepca-prod:/home/step
+    ports:
+      - "442:9000"
+    restart: unless-stopped
+    networks:
+      - traefik-prod-1
+
+networks:
+  traefik-prod-1:
+    external: true
