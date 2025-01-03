@@ -16,7 +16,7 @@ services:
     volumes:
       - /home/srv-prod-1/infrastructure-prod/docker-prod/stepca-prod:/home/step
     ports:
-      - "442:9000"
+      - "443:9000"
     restart: unless-stopped
     networks:
       - traefik-prod-1
